@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現代社会 選択クイズ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e17;
+    --surface: #1a1829;
+    --card: #201e35;
+    --border: #2e2b4a;
+    --accent: #f7c948;
+    --correct: #4ade80;
+    --wrong: #f87171;
+    --accent3: #60c8f0;
+    --text: #ede9f6;
+    --text-muted: #8b87a8;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 60px;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: -30%; left: -20%;
+    width: 70%; height: 70%;
+    background: radial-gradient(ellipse, rgba(247,201,72,0.07) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -30%; right: -20%;
+    width: 60%; height: 60%;
+    background: radial-gradient(ellipse, rgba(96,200,240,0.06) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  header {
+    width: 100%; max-width: 500px;
+    padding: 28px 20px 10px;
+    text-align: center; position: relative; z-index: 1;
+  }
+  .title-label {
+    font-size: 10px; letter-spacing: 3px; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 5px; font-weight: 700;
+  }
+  header h1 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(20px, 6vw, 26px); font-weight: 900;
+  }
+  header h1 span { color: var(--accent); }
+  .category-bar {
+    width: 100%; max-width: 500px;
+    padding: 10px 16px;
+    display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none;
+    position: relative; z-index: 1;
+  }
+  .category-bar::-webkit-scrollbar { display: none; }
+  .cat-btn {
+    flex-shrink: 0; padding: 6px 13px; border-radius: 50px;
+    border: 1.5px solid var(--border); background: transparent;
+    color: var(--text-muted); font-size: 12px; font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .cat-btn.active, .cat-btn:hover {
+    border-color: var(--accent); color: var(--accent);
+    background: rgba(247,201,72,0.08);
+  }
+  .meta-row {
+    width: 100%; max-width: 500px;
+    padding: 4px 20px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    position: relative; z-index: 1;
+  }
+  .score-pill {
+    display: flex; gap: 12px; align-items: center;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .score-pill strong { color: var(--accent); font-size: 15px; }
+  .shuffle-toggle {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--text-muted);
+    cursor: pointer; padding: 4px 10px; border-radius: 50px;
+    border: 1px solid var(--border); background: transparent;
+    font-family: 'Noto Sans JP', sans-serif; transition: all .2s;
+  }
+  .shuffle-toggle.on { color: var(--accent3); border-color: rgba(96,200,240,0.4); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .shuffle-toggle.on .dot { background: var(--accent3); }
+  .progress-wrap {
+    width: 100%; max-width: 500px;
+    padding: 6px 20px 0; position: relative; z-index: 1;
+  }
+  .progress-track {
+    height: 4px; background: var(--border);
+    border-radius: 4px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #f79c48);
+    border-radius: 4px; transition: width .45s ease;
+  }
+  .quiz-container {
+    width: 100%; max-width: 500px;
+    padding: 12px 16px 0;
+    position: relative; z-index: 1;
+  }
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 20px 20px;
+    position: relative; overflow: hidden;
+    animation: fadeSlide .35s ease;
+  }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .question-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+  }
+  .q-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+  }
+  .q-tag {
+    font-size: 10px; padding: 3px 10px; border-radius: 50px;
+    font-weight: 700; letter-spacing: 1px;
+  }
+  .q-tag.t1 { background: rgba(248,113,113,.15); color: #f8a0a0; border: 1px solid rgba(248,113,113,.3); }
+  .q-tag.t2 { background: rgba(96,200,240,.15);  color: #80d8f4; border: 1px solid rgba(96,200,240,.3); }
+  .q-tag.t3 { background: rgba(247,201,72,.15);  color: #f7c948; border: 1px solid rgba(247,201,72,.3); }
+  .q-tag.t4 { background: rgba(74,222,128,.15);  color: #74dea0; border: 1px solid rgba(74,222,128,.3); }
+  .q-tag.t5 { background: rgba(192,132,252,.15); color: #c084fc; border: 1px solid rgba(192,132,252,.3); }
+  .q-num { font-size: 12px; color: var(--text-muted); }
+  .question-text {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(15px, 4.5vw, 18px);
+    font-weight: 700; line-height: 1.7;
+    color: var(--text); margin-bottom: 20px;
+  }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 16px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer; transition: all .18s;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: clamp(13px, 3.8vw, 15px);
+    color: var(--text); text-align: left;
+  }
+  .option-btn:not(.disabled):hover {
+    border-color: var(--accent);
+    background: rgba(247,201,72,0.07);
+    transform: translateX(3px);
+  }
+  .option-btn.disabled { cursor: default; }
+  .option-label {
+    flex-shrink: 0;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--text-muted);
+    transition: all .18s;
+  }
+  .option-text { flex: 1; line-height: 1.45; }
+  .option-btn.correct {
+    border-color: var(--correct);
+    background: rgba(74,222,128,0.1);
+    animation: correctPop .35s ease;
+  }
+  .option-btn.correct .option-label { background: var(--correct); color: #0a2010; }
+  @keyframes correctPop {
+    0%  { transform: scale(1); }
+    40% { transform: scale(1.03); }
+    100%{ transform: scale(1); }
+  }
+  .option-btn.wrong {
+    border-color: var(--wrong);
+    background: rgba(248,113,113,0.1);
+    animation: shake .35s ease;
+  }
+  .option-btn.wrong .option-label { background: var(--wrong); color: #2a0808; }
+  @keyframes shake {
+    0%,100%{ transform: translateX(0); }
+    25%    { transform: translateX(-6px); }
+    75%    { transform: translateX(6px); }
+  }
+  .option-btn.dimmed { opacity: .38; }
+  .explanation {
+    margin-top: 14px;
+    background: rgba(247,201,72,0.07);
+    border: 1px solid rgba(247,201,72,0.25);
+    border-radius: 12px;
+    padding: 13px 16px;
+    display: none;
+    animation: popIn .3s ease;
+  }
+  .explanation.visible { display: block; }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .exp-label { font-size: 10px; letter-spacing: 2px; color: var(--accent); font-weight: 700; margin-bottom: 5px; }
+  .exp-text { font-size: 13px; color: var(--text-muted); line-height: 1.65; }
+  .btn-next {
+    width: 100%; margin-top: 12px;
+    padding: 14px; border-radius: 12px; border: none;
+    background: rgba(96,200,240,.13);
+    border: 1.5px solid rgba(96,200,240,.35);
+    color: var(--accent3);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; display: none; transition: all .2s;
+  }
+  .btn-next:hover { background: rgba(96,200,240,.25); transform: translateY(-1px); }
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 36px 24px 30px;
+    text-align: center;
+    display: none; animation: fadeSlide .4s ease;
+  }
+  .result-card.visible { display: block; }
+  .result-emoji { font-size: 60px; margin-bottom: 10px; }
+  .result-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 20px; font-weight: 900; color: var(--accent); margin-bottom: 6px;
+  }
+  .result-score { font-size: 48px; font-weight: 900; margin: 8px 0; }
+  .result-score span { font-size: 20px; color: var(--text-muted); }
+  .result-msg { font-size: 14px; color: var(--text-muted); line-height: 1.7; margin-bottom: 20px; }
+  .stats-row { display: flex; gap: 10px; margin-bottom: 22px; }
+  .stat-box {
+    flex: 1; background: var(--surface);
+    border-radius: 12px; padding: 14px 8px;
+    text-align: center; border: 1px solid var(--border);
+  }
+  .stat-num { font-size: 26px; font-weight: 900; }
+  .stat-num.c { color: var(--correct); }
+  .stat-num.w { color: var(--wrong); }
+  .stat-pct { font-size: 22px; font-weight: 900; color: var(--accent); }
+  .stat-label { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+  .btn-restart {
+    background: var(--accent); color: #1a1500;
+    padding: 14px 36px; border-radius: 50px;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; border: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: all .2s;
+  }
+  .btn-restart:hover { background: #f0d040; transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-label">Multiple Choice</div>
+  <h1>現代社会<span>選択クイズ</span></h1>
+</header>
+
+<div class="category-bar" id="catBar">
+  <button class="cat-btn active" data-cat="all">すべて</button>
+  <button class="cat-btn" data-cat="キリスト教">キリスト教</button>
+  <button class="cat-btn" data-cat="イスラーム">イスラーム</button>
+  <button class="cat-btn" data-cat="仏教">仏教</button>
+  <button class="cat-btn" data-cat="儒教">儒教</button>
+  <button class="cat-btn" data-cat="自己形成">自己形成</button>
+</div>
+
+<div class="meta-row">
+  <div class="score-pill">
+    問&nbsp;<strong id="curNum">1</strong>
+    &nbsp;／&nbsp;
+    正解&nbsp;<strong id="scoreNum">0</strong>
+  </div>
+  <button class="shuffle-toggle" id="shuffleBtn"><span class="dot"></span>シャッフル</button>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-track">
+    <div class="progress-fill" id="progFill" style="width:0%"></div>
+  </div>
+</div>
+
+<div class="quiz-container">
+  <div class="question-card" id="questionCard">
+    <div class="q-meta">
+      <span class="q-tag" id="qTag"></span>
+      <span class="q-num" id="qNum">1 / 40</span>
+    </div>
+    <div class="question-text" id="qText">読み込み中...</div>
+    <div class="options" id="optionsWrap"></div>
+    <div class="explanation" id="explanation">
+      <div class="exp-label">▶ 解説</div>
+      <div class="exp-text" id="expText"></div>
+    </div>
+    <button class="btn-next" id="nextBtn" onclick="nextQuestion()">次の問題 →</button>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-title">クイズ終了！</div>
+    <div class="result-score" id="resultScore">0<span> / 0</span></div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-num c" id="rCorrect">0</div><div class="stat-label">正解</div></div>
+      <div class="stat-box"><div class="stat-num w" id="rWrong">0</div><div class="stat-label">不正解</div></div>
+      <div class="stat-box"><div class="stat-pct" id="rPct">0%</div><div class="stat-label">正答率</div></div>
+    </div>
+    <div class="result-msg" id="resultMsg"></div>
+    <button class="btn-restart" onclick="restart()">もう一度挑戦</button>
+  </div>
+</div>
+
+<script>
+const LABELS = ['A','B','C','D'];
+const CAT_CLASS = {'キリスト教':'t1','イスラーム':'t2','仏教':'t3','儒教':'t4','自己形成':'t5'};
+
+const ALL_QUESTIONS = [
+  {cat:'キリスト教',q:'キリスト教の開祖は誰ですか？',a:'イエス',d:['パウロ','モーセ','ムハンマド'],e:'ユダヤ教の伝統を批判し，神からの喜ばしい知らせ（福音）を伝えたが，迫害を受け十字架の刑に処せられた。'},
+  {cat:'キリスト教',q:'キリスト教の母胎となった宗教は何ですか？',a:'ユダヤ教',d:['イスラーム','ゾロアスター教','ヒンドゥー教'],e:'ユダヤ人が唯一絶対の神ヤハウェへの信仰に基づき形成した宗教。キリスト教はその内部から生まれた。'},
+  {cat:'キリスト教',q:'ユダヤ教の唯一絶対の神の名前は？',a:'ヤハウェ',d:['アッラー','ブラフマー','ゼウス'],e:'ユダヤ人は多くの迫害のなかでヤハウェへの信仰を守り続けた。'},
+  {cat:'キリスト教',q:'ユダヤ教における救世主のことを何と呼ぶか？',a:'メシア',d:['キリスト','ラビ','ファリサイ'],e:'自分たちを救い，神の国を実現する救世主のこと。ギリシア語では「キリスト」に相当する。'},
+  {cat:'キリスト教',q:'ユダヤ教で神が定めたおきてを厳格に守る考え方を何主義というか？',a:'律法主義',d:['道徳主義','自然主義','禁欲主義'],e:'モーセの「十戒」など宗教上・生活上のおきてを守ることが，人間としての正しさ（義）とされた。'},
+  {cat:'キリスト教',q:'イエスが説いた神の無条件の愛をギリシア語で何というか？',a:'アガペー',d:['エロス','フィリア','ストルゲー'],e:'律法を守れない人々にこそ神の愛（アガペー）は注がれると説いた。すべての人への隣人愛につながる。'},
+  {cat:'キリスト教',q:'「人にしてもらいたいことは，あなた方も人にしなさい」というイエスの言葉を何と呼ぶか？',a:'黄金律',d:['自然法','福音','戒律'],e:'隣人愛の精神を端的に表す言葉で，すべての人を仲間として愛することを説く。'},
+  {cat:'キリスト教',q:'人間が生まれながらにもつ根源的な罪を何というか？',a:'原罪',d:['業（カルマ）','煩悩','本罪'],e:'イエスの十字架の死は，人間がもつ原罪をあがなった贖罪の死とされる。'},
+  {cat:'キリスト教',q:'イエスの死が人間の罪を身代わりに引き受けたとする考えを何というか？',a:'贖罪',d:['涅槃','解脱','カルマ'],e:'贖罪の死によって，イエスを救世主＝キリストとする信仰（原始キリスト教）が生まれた。'},
+  {cat:'キリスト教',q:'イエスによる神の愛という「よい知らせ」を何というか？',a:'福音',d:['律法','教令','啓示'],e:'「福音」はギリシア語で「よい知らせ」を意味する。ユダヤ教の律法主義と対立した。'},
+  {cat:'イスラーム',q:'イスラームの開祖は誰ですか？',a:'ムハンマド',d:['アリー','アブー＝バクル','サラディン'],e:'メッカ出身。最大にして最後の預言者とされ，アッラーの啓示を伝えた。'},
+  {cat:'イスラーム',q:'イスラームの唯一神の名前は？',a:'アッラー',d:['ヤハウェ','ブラフマー','天帝'],e:'全知全能のアッラーに絶対的に服従すること＝イスラームである。'},
+  {cat:'イスラーム',q:'アッラーの啓示を記したイスラームの聖典の名前は？',a:'クルアーン',d:['ハディース','タルムード','ヴェーダ'],e:'信仰内容・信者のつとめ（六信五行）のほか，政治・経済など社会生活のあり方も記される。'},
+  {cat:'イスラーム',q:'イスラームの信仰内容と信者のつとめを総称して何というか？',a:'六信五行',d:['十戒','四諦八正道','三宝'],e:'生活のすべてが宗教的営みとつながっている点がイスラームの大きな特徴。'},
+  {cat:'イスラーム',q:'「アッラーに絶対的に服従すること」を意味するアラビア語は何か？',a:'イスラーム',d:['ジハード','ウンマ','シャリーア'],e:'「イスラーム」とはアラビア語で「服従・帰依」を意味する。'},
+  {cat:'仏教',q:'仏教の開祖の名前は？',a:'ゴータマ＝シッダッタ（ブッダ）',d:['ナーガールジュナ','アショーカ王','ダルマパーラ'],e:'すべては苦であるととらえ，その克服方法（八正道）と，慈悲の心を説いた。'},
+  {cat:'仏教',q:'「現実の世界は苦しみに満ちている」という仏教の根本思想を何というか？',a:'一切皆苦',d:['諸行無常','諸法無我','涅槃寂静'],e:'苦には生・老・病・死（四苦）と，さらに四つの苦を加えた四苦八苦がある。'},
+  {cat:'仏教',q:'生・老・病・死の四つの苦を何というか？',a:'四苦',d:['八苦','煩悩','業'],e:'四苦に怨憎会苦・愛別離苦・求不得苦・五蘊盛苦を加えたものが四苦八苦。'},
+  {cat:'仏教',q:'愛するものと別れなくてはならない苦しみを何というか？',a:'愛別離苦',d:['怨憎会苦','求不得苦','五蘊盛苦'],e:'怨憎会苦は憎むものに出あう苦，求不得苦は求めるものが手に入らない苦。'},
+  {cat:'仏教',q:'あらゆるものは互いに依存しあって生起するというブッダの悟った真理を何というか？',a:'縁起の法',d:['業の法則','輪廻の理','因果の道'],e:'縁起の法から，諸行無常・諸法無我という考えが導かれる。'},
+  {cat:'仏教',q:'「常にかわらないものは一つとしてない」という仏教思想を何というか？',a:'諸行無常',d:['諸法無我','一切皆苦','涅槃寂静'],e:'縁起の法に基づく根本思想の一つ。諸法無我とともに仏教の柱。'},
+  {cat:'仏教',q:'「それだけで存在するような固定的なものはない」という仏教思想を何というか？',a:'諸法無我',d:['諸行無常','一切皆苦','縁起の法'],e:'縁起の法に基づく。固定的・実体的な自己（我）は存在しないという考え。'},
+  {cat:'仏教',q:'苦の原因となる，執着を引き起こす根源的欲求を何というか？',a:'渇愛',d:['煩悩','無明','業'],e:'渇愛が煩悩を引き起こし，苦の連鎖を生む原因とされる。'},
+  {cat:'仏教',q:'真理を理解できていない根源的無知のことを何というか？',a:'無明',d:['煩悩','渇愛','業'],e:'無明にとらわれると執着・煩悩から逃れられず，苦を取り除けない。'},
+  {cat:'仏教',q:'欲望を滅ぼし執着を捨てて到達する，心安らかな境地を何というか？',a:'涅槃寂静',d:['解脱','極楽浄土','天国'],e:'八正道の実践によって到達できるとされる仏教最高の境地。'},
+  {cat:'仏教',q:'八正道の実践によって生まれる，他者の苦しみを救おうとする心を何というか？',a:'慈悲',d:['アガペー','仁','恕'],e:'慈悲の心と，執着から解放された真の自己の完成が仏教のめざすもの。'},
+  {cat:'儒教',q:'儒教の祖は誰ですか？',a:'孔子',d:['孟子','荀子','朱子'],e:'前551年ごろ〜前479年。祖先崇拝を基礎とし，仁と礼を核心とする思想を説いた。'},
+  {cat:'儒教',q:'儒教における，近親者への自然な情愛を基本とする最高の徳を何というか？',a:'仁',d:['礼','義','智'],e:'父母への孝行・兄への従順（孝悌）を根本とし，他人への思いやりへと広がる。'},
+  {cat:'儒教',q:'儒教で，父母に孝行し兄や年長者に従順であることを何というか？',a:'孝悌',d:['克己','忠恕','修身'],e:'仁の根本。孝は親への孝行，悌は兄・年長者への従順を意味する。'},
+  {cat:'儒教',q:'儒教において，仁を客観的な形式として実践したものを何というか？',a:'礼',d:['義','信','智'],e:'礼は社会秩序を維持する外的規範・作法。仁と礼は儒教の二大徳目。'},
+  {cat:'儒教',q:'儒教で「人を治める者はまず自らを修めなければならない」という考えを何というか？',a:'修己治人',d:['徳治主義','礼楽政治','仁政'],e:'君子が自己を完成させることで，民もおのずから従うという「徳治主義」につながる。'},
+  {cat:'自己形成',q:'エリクソンが青年期の発達課題とした，「自分らしさ」の確立を何というか？',a:'アイデンティティ（自我同一性）',d:['パーソナリティ','自己実現','社会化'],e:'一貫性があり他と区別される自分が意識され，周囲にも認められているという意識。'},
+  {cat:'自己形成',q:'情報過多などで自分が何者かわからなくなった状態を何というか？',a:'アイデンティティの拡散',d:['アパシー','フラストレーション','退行'],e:'情報に振り回され自意識過剰になり，等身大の自己を見失った状態。'},
+  {cat:'自己形成',q:'何ごとにも興味・関心をもてなくなる状態を何というか？',a:'アパシー',d:['フラストレーション','ノイローゼ','コンプレックス'],e:'青年が自己形成していく努力をくじいてしまう要因になる。'},
+  {cat:'自己形成',q:'欲求が実現されず心の緊張が高まった状態を何というか？',a:'欲求不満（フラストレーション）',d:['葛藤（コンフリクト）','防衛機制','アパシー'],e:'精神分析学者フロイト（オーストリア）が研究した概念。'},
+  {cat:'自己形成',q:'欲求不満から生じる苦痛を避け，自我を無意識に守ろうとする心の働きを何というか？',a:'防衛機制',d:['適応行動','社会化','昇華'],e:'抑圧・合理化・同一視・投射・反動形成・逃避・退行・代償・昇華などがある。'},
+  {cat:'自己形成',q:'防衛機制のうち，欲求不満を無意識に抑えこんで忘却することを何というか？',a:'抑圧',d:['合理化','反動形成','投射'],e:'無意識の防衛機制の代表例。意識から不安な内容を排除しようとする働き。'},
+  {cat:'自己形成',q:'防衛機制のうち，より高い価値の欲求に置き換えて満足することを何というか？',a:'昇華',d:['代償','退行','逃避'],e:'スポーツ・芸術活動などへのエネルギー転換が昇華の例として挙げられる。'},
+  {cat:'自己形成',q:'個性・人格を意味し，環境への働きかけのなかで形成されるものを何というか？',a:'パーソナリティ',d:['アイデンティティ','自我','キャラクター'],e:'パーソナリティがその人の環境への適応の仕方を決めている。'},
+  {cat:'自己形成',q:'「人間は社会的動物である」と定義した古代ギリシアの哲学者は誰か？',a:'アリストテレス',d:['ソクラテス','プラトン','デカルト'],e:'人間は社会を作り，社会とのかかわりのなかで自己を形成していく存在であると説いた。'},
+  {cat:'自己形成',q:'自発的に社会や他人に貢献する活動を何というか？',a:'ボランティア活動',d:['インターンシップ','NPO活動','市民活動'],e:'新たな世界との出あいやつながりにより，自己実現と生きがいにつながる人間的連帯が生まれる。'},
+];
+
+let questions=[], currentIndex=0, score=0, wrongCount=0, currentCat='all', shuffleMode=false, answered=false;
+
+const shuffle = arr => [...arr].sort(()=>Math.random()-.5);
+
+function getCatQ(cat){
+  let qs = cat==='all' ? [...ALL_QUESTIONS] : ALL_QUESTIONS.filter(q=>q.cat===cat);
+  return shuffleMode ? shuffle(qs) : qs;
+}
+
+function buildChoices(q){ return shuffle([q.a,...shuffle(q.d).slice(0,3)]); }
+
+function loadQ(){
+  if(currentIndex>=questions.length){ showResult(); return; }
+  answered=false;
+  const q=questions[currentIndex];
+  const choices=buildChoices(q);
+  const tag=document.getElementById('qTag');
+  tag.textContent=q.cat; tag.className='q-tag '+(CAT_CLASS[q.cat]||'t1');
+  document.getElementById('qNum').textContent=(currentIndex+1)+' / '+questions.length;
+  document.getElementById('curNum').textContent=currentIndex+1;
+  document.getElementById('qText').textContent=q.q;
+  const wrap=document.getElementById('optionsWrap');
+  wrap.innerHTML='';
+  choices.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.className='option-btn';
+    btn.innerHTML=`<span class="option-label">${LABELS[i]}</span><span class="option-text">${c}</span>`;
+    btn.addEventListener('click',()=>pick(c,q.a,q.e));
+    wrap.appendChild(btn);
+  });
+  document.getElementById('explanation').classList.remove('visible');
+  document.getElementById('nextBtn').style.display='none';
+  document.getElementById('progFill').style.width=(currentIndex/questions.length*100)+'%';
+  const card=document.getElementById('questionCard');
+  card.style.animation='none'; void card.offsetWidth; card.style.animation='fadeSlide .35s ease';
+}
+
+function pick(chosen,correct,exp){
+  if(answered)return; answered=true;
+  document.querySelectorAll('.option-btn').forEach(btn=>{
+    const t=btn.querySelector('.option-text').textContent;
+    btn.classList.add('disabled');
+    if(t===correct) btn.classList.add('correct');
+    else if(t===chosen) btn.classList.add('wrong');
+    else btn.classList.add('dimmed');
+  });
+  if(chosen===correct) score++; else wrongCount++;
+  document.getElementById('scoreNum').textContent=score;
+  document.getElementById('expText').textContent=exp;
+  document.getElementById('explanation').classList.add('visible');
+  document.getElementById('nextBtn').style.display='block';
+}
+
+function nextQuestion(){ currentIndex++; loadQ(); }
+
+function showResult(){
+  document.getElementById('questionCard').style.display='none';
+  document.getElementById('resultCard').classList.add('visible');
+  const total=questions.length, pct=Math.round(score/total*100);
+  document.getElementById('resultScore').innerHTML=score+'<span> / '+total+'</span>';
+  document.getElementById('rCorrect').textContent=score;
+  document.getElementById('rWrong').textContent=wrongCount;
+  document.getElementById('rPct').textContent=pct+'%';
+  document.getElementById('progFill').style.width='100%';
+  let emoji,msg;
+  if(pct>=90){emoji='🏆';msg='完璧に近い成績！宗教と現代社会の知識がしっかり身についています。';}
+  else if(pct>=70){emoji='✨';msg='好成績！あと少しで完璧。苦手分野を中心に復習しましょう。';}
+  else if(pct>=50){emoji='📚';msg='半分以上正解できました。もう一度テキストを確認してみよう。';}
+  else{emoji='💪';msg='繰り返し挑戦することで確実に力がつきます。再チャレンジしてみよう！';}
+  document.getElementById('resultEmoji').textContent=emoji;
+  document.getElementById('resultMsg').textContent=msg;
+}
+
+function restart(){
+  score=0;wrongCount=0;currentIndex=0;
+  document.getElementById('scoreNum').textContent=0;
+  document.getElementById('resultCard').classList.remove('visible');
+  document.getElementById('questionCard').style.display='';
+  questions=getCatQ(currentCat); loadQ();
+}
+
+document.querySelectorAll('.cat-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); currentCat=btn.dataset.cat;
+    score=0;wrongCount=0;currentIndex=0;
+    document.getElementById('scoreNum').textContent=0;
+    document.getElementById('resultCard').classList.remove('visible');
+    document.getElementById('questionCard').style.display='';
+    questions=getCatQ(currentCat); loadQ();
+  });
+});
+
+document.getElementById('shuffleBtn').addEventListener('click',()=>{
+  shuffleMode=!shuffleMode;
+  document.getElementById('shuffleBtn').classList.toggle('on',shuffleMode);
+  score=0;wrongCount=0;currentIndex=0;
+  document.getElementById('scoreNum').textContent=0;
+  document.getElementById('resultCard').classList.remove('visible');
+  document.getElementById('questionCard').style.display='';
+  questions=getCatQ(currentCat); loadQ();
+});
+
+questions=getCatQ('all'); loadQ();
+</script>
+</body>
+</html>
