@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>現代社会 選択クイズ</title>
+<title>現代社会 選択クイズ created by 志村淳之介 1-5-22</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<header>
+  <p>created by 志村淳之介 1-5-22</p>
+</header>
 <style>
   :root {
     --bg: #0f0e17;
@@ -428,7 +431,7 @@ function pick(chosen,correct,exp){
   document.getElementById('scoreNum').textContent=score;
   document.getElementById('expText').textContent=exp;
   document.getElementById('explanation').classList.add('visible');
-  document.getElementById('nextBtn').style.display='block';
+  document.getElementById('nextBtn').style.display='';
 }
 
 function nextQuestion(){ currentIndex++; loadQ(); }
